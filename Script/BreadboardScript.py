@@ -80,6 +80,8 @@ class MyParser:
         self.XML_OperatorStart = "\t\t<operator val_name=\"{name}\">"
         self.XML_Adder = "\t\t\t<adder val_name=\"{name}\" val_bitsize=\"{bit_size}\" co_st_input1=\"{name}_Input1\" co_st_input2=\"{name}_Input2\" co_st_output=\"{name}_Output\"/>"
         self.XML_Sub = "\t\t\t<sub val_name=\"{name}\" val_bitsize=\"{bit_size}\" co_st_ip1=\"{name}_Input1\" co_st_ip2=\"{name}_Input2\" co_st_op=\"{name}_Output\"/>"
+        self.XML_Mul = "\t\t\t<mul val_name=\"{name}\" val_bitsize=\"{bit_size}\" co_st_input1=\"{name}_Input1\" co_st_input2=\"{name}_Input2\" co_st_output=\"{name}_Output\"/>"
+        self.XML_Div = "\t\t\t<mul val_name=\"{name}\" val_bitsize=\"{bit_size}\" co_st_input1=\"{name}_Input1\" co_st_input2=\"{name}_Input2\" co_st_output=\"{name}_Output\"/>"
         self.XML_Mux = "\t\t<mux val_name=\"{name}\" val_bitsize=\"{bit_size}\" "
         self.XML_Wire = "\t<wire co_st_source=\"{source}\" co_st_destination=\"{destination}\" />"
         self.XML_Bus_Start = "\t<bus val_name=\"{name}\" >"
@@ -124,13 +126,15 @@ class MyParser:
 
         }
 
-        self.tokens = ['NAME', 'SEM', 'COL', 'NUMBER','QUOTES','LSHIFT','DOT','EQUALS','PLUS','MINUS','COMMA','LPAREN','RPAREN','GT', 'LT', 'EQ'] + list(self.reserved.values())
+        self.tokens = ['NAME', 'SEM', 'COL', 'NUMBER','QUOTES','LSHIFT','DOT','EQUALS','PLUS','MINUS','MUL','DIV','COMMA','LPAREN','RPAREN','GT', 'LT', 'EQ'] + list(self.reserved.values())
     t_DOT =  r'\.'
     t_QUOTES = r'"'
     t_LSHIFT = r'<<'
     t_EQUALS = r'='
     t_PLUS = r'\+'
     t_MINUS = r'-'
+    t_MUL = r'\*'
+    t_DIV = r'\/'
     t_COMMA = r','
     t_LPAREN = r'\('
     t_RPAREN = r'\)'
@@ -335,6 +339,8 @@ class MyParser:
         '''
         expression : expression PLUS expression
                    | expression MINUS expression
+                   | expression MUL expression
+                   | expression DIV expression
                    | term
         '''        
         if len(p) == 4 and self.loc_ALUNameClash:
@@ -342,7 +348,10 @@ class MyParser:
                 self.loc_ALUStack.append('+') 
             elif p[2] == '-':
                 self.loc_ALUStack.append('-')
-                
+            elif p[2] == '*':
+                self.loc_ALUStack.append('*')
+            elif p[2] == '/':
+                self.loc_ALUStack.append('/')                
     def ALUInfo_Update(self, p):
         if self.loc_ALUIdx!=-1:
             self.add_ALUOperator(idx=self.loc_ALUIdx, op_name=self.loc_ALUOpName, op_list=self.loc_ALUStack)
@@ -419,6 +428,10 @@ class MyParser:
                         self.XMLStack=self.XMLStack+'\n'+self.XML_Adder.format(name=alu_operator.OpName+"_"+str(idx),bit_size=alu_detail.ALUBit)
                     elif Op =='-':
                         self.XMLStack=self.XMLStack+'\n'+self.XML_Sub.format(name=alu_operator.OpName+"_"+str(idx),bit_size=alu_detail.ALUBit)
+                    elif Op =='*':
+                        self.XMLStack=self.XMLStack+'\n'+self.XML_Mul.format(name=alu_operator.OpName+"_"+str(idx),bit_size=alu_detail.ALUBit)
+                    elif Op =='/':
+                        self.XMLStack=self.XMLStack+'\n'+self.XML_Div.format(name=alu_operator.OpName+"_"+str(idx),bit_size=alu_detail.ALUBit)
                     if idx>0:
                         self.loc_ALUWire.append("\t"+self.XML_Wire.format(source=alu_operator.OpName+"_"+str(idx-1)+"_Output",destination=alu_operator.OpName+"_"+str(idx)+"_Input1"))
                         self.loc_ALUWire.append("\t"+self.XML_Wire.format(source="Out_Reg_"+alu_detail.ALUName+"_"+str(idx+1),destination=alu_operator.OpName+"_"+str(idx)+"_Input2"))
