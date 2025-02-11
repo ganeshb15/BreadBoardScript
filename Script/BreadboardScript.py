@@ -231,7 +231,7 @@ class MyParser:
 
     def p_statement_delay(self, p):
         '''
-        statement : DELAY LPAREN NUMBER RPAREN SEM
+        statement : DELAY LPAREN NUMBER RPAREN
         '''        
         self.Assembly.append("Delay,"+str(p[3]))
 
@@ -365,16 +365,18 @@ class MyParser:
         p[0] = p[1]
     def p_statement_Display(self, p):
         '''
-        statement : TTY LSHIFT NAME  LSHIFT  NAME  SEM
+        statement : TTY DOT NAME LPAREN NAME RPAREN SEM
         '''        
-        p[0] = ("ttystr",p[3], p[5])            
-        self.Assembly.append("ttyStr,"+p[5])  
+        p[0] = ("ttystr", p[3], p[5])            
+        self.Assembly.append("ttyStr," + p[5])
+  
     def p_statement_Display_ASCII(self, p):
         '''
-        statement : TTY LSHIFT NAME  LSHIFT QUOTES NAME QUOTES SEM
+        statement : TTY DOT NAME LPAREN QUOTES NAME QUOTES RPAREN SEM
         '''        
-        p[0] = ("ttystr",p[3], p[6])            
+        p[0] = ("ttystr", p[3], p[6])            
         print(p[6])
+
         
         if p[6]=="newline":
             self.Assembly.append("ttyStrASCII,13")
